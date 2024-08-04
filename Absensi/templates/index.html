@@ -45,9 +45,6 @@
             max-width: 120px; /* Limit the width of user_id input fields */
         }
 
-        #records input[type="text"].form-control {
-            width: 150px; 
-        }
         #records .form-control {
             height: auto; /* Adjust height to better fit content */
             padding: 5px; /* Reduce padding for a more compact look */
@@ -58,78 +55,164 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        function fetchRecords() {
-            const idFilter = document.getElementById('idFilter').value;
-            const userIdFilter = document.getElementById('userIdFilter').value;
-            const attendanceFilter = document.getElementById('attendanceFilter').value;
-            const nameFilter = document.getElementById('nameFilter').value;
-            const lateFilter = document.getElementById('lateFilter').value;
+function fetchRecords() {
+    const idFilter = document.getElementById('idFilter').value;
+    const userIdFilter = document.getElementById('userIdFilter').value;
+    const attendanceFilter = document.getElementById('attendanceFilter').value;
+    const nameFilter = document.getElementById('nameFilter').value;
+    const lateFilter = document.getElementById('lateFilter').value;
 
-            fetch(`../fetch_records.php?id=${idFilter}&user_id=${userIdFilter}&attendance=${attendanceFilter}&name=${nameFilter}&is_late=${lateFilter}`)
-                .then(response => response.text())
-                .then(text => {
-                    try {
-                        const data = JSON.parse(text);
-                        console.log('Fetched data:', data); // Log the fetched data
-                        displayRecords(data);
-                    } catch (error) {
-                        console.error('Error parsing JSON:', error);
-                        console.error('Response text:', text); // Log the raw response
-                    }
-                })
-                .catch(error => console.error('Error fetching records:', error));
+    fetch(`../fetch_records.php?id=${idFilter}&user_id=${userIdFilter}&attendance=${attendanceFilter}&name=${nameFilter}&is_late=${lateFilter}`)
+        .then(response => response.text())
+        .then(text => {
+            try {
+                const data = JSON.parse(text);
+                console.log('Fetched data:', data); // Log the fetched data
+                const groupedData = groupByWeek(data);
+                displayRecords(groupedData);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+                console.error('Response text:', text); // Log the raw response
+            }
+        })
+        .catch(error => console.error('Error fetching records:', error));
+}
+
+function groupByWeek(records) {
+    const grouped = {};
+    records.forEach(record => {
+        const week = getWeekOfYear(new Date(record.datetime));
+        if (!grouped[week]) {
+            grouped[week] = [];
         }
-
-        function displayRecords(data) {
-         let recordsDiv = document.getElementById('records');
-         let table = '<table class="table table-bordered"><tr><th>ID</th><th>User ID</th><th>Full Name</th><th>Date Time</th><th>Check Type</th><th>Attendance</th><th>Attendance Type</th><th>Late</th><th>Actions</th></tr>';
-
-                data.forEach((record, index) => {
-                    // Calculate the display ID
-                    let displayId = (index % 5) + 1;
-
-                    // Insert separator after every 5 records
-                    if (index % 5 === 0 && index !== 0) {
-                        table += `<tr><td colspan="9" style="text-align:center; font-weight:bold;">--Minggu ${Math.floor(index / 5) + 1}--</td></tr>`;
-                    }
-
-                    table += `<tr>
-                                <td>${displayId}</td>
-                                <td><input type="text" value="${record.user_id}" id="user_id_${record.id}" class="form-control"></td>
-                                <td>${record.full_name}</td>
-                                <td><input type="text" value="${record.datetime}" id="datetime_${record.id}" class="form-control datetimepicker"></td>
-                                <td>
-                                    <select id="check_type_${record.id}" class="form-control" onchange="updateAttendance(${record.id})">
-                                        <option value="0" ${record.check_type == 0 ? 'selected' : ''}>Check In</option>
-                                        <option value="1" ${record.check_type == 1 ? 'selected' : ''}>Check Out</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select id="attendance_${record.id}" class="form-control">
-                                        <option value="0" ${record.attendance == 'Absent' ? 'selected' : ''}>Absent</option>
-                                        <option value="1" ${record.attendance == 'Present' ? 'selected' : ''}>Present</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select id="attendance_type_${record.id}" class="form-control">
-                                        <option value="1" ${record.attendance_type == 'Fingerprint' ? 'selected' : ''}>Fingerprint Method</option>
-                                        <option value="16" ${record.attendance_type == 'Face Recognition' ? 'selected' : ''}>Face Recognition Method</option>
-                                    </select>
-                                </td>
-                                <td>${record.is_late == 1 ? 'Yes' : 'No'}</td>
-                                <td>
-                                    <button onclick="editRecord(${record.id})" class="btn btn-primary">Save Changes</button>
-                                    <button onclick="deleteRecord(${record.id})" class="btn btn-danger">Delete</button>
-                                </td>
-                            </tr>`;
-                });
-                table += '</table>';
-                recordsDiv.innerHTML = table;
-
-                flatpickr(".datetimepicker", {
-                    enableTime: true,
-                    dateFormat: "Y-m-d H:i",
+        grouped[week].push(record);
     });
+
+    const uniqueRecords = {};
+    Object.keys(grouped).forEach(week => {
+        const weekRecords = grouped[week];
+        const userMap = {};
+        weekRecords.forEach(record => {
+            if (!userMap[record.user_id]) {
+                userMap[record.user_id] = [];
+            }
+            userMap[record.user_id].push(record);
+        });
+
+        Object.keys(userMap).forEach(userId => {
+            const userRecords = userMap[userId];
+            if (userRecords.length > 1) {
+                userRecords.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+            }
+            uniqueRecords[`${week}_${userId}`] = userRecords[0];
+        });
+    });
+
+    return Object.values(uniqueRecords);
+}
+
+function getWeekOfYear(date) {
+    const start = new Date(date.getFullYear(), 0, 1);
+    const diff = date - start + ((start.getTimezoneOffset() - date.getTimezoneOffset()) * 60000);
+    const oneWeek = 604800000;
+    const weekNumber = Math.ceil(diff / oneWeek);
+    return weekNumber;
+}
+
+function displayRecords(data) {
+    let recordsDiv = document.getElementById('records');
+    let table = '<table class="table table-bordered"><tr><th>ID</th><th>User ID</th><th>Full Name</th><th>Date Time</th><th>Check Type</th><th>Attendance</th><th>Attendance Type</th><th>Late</th><th>Actions</th></tr>';
+
+    const weekRecords = {};
+    data.forEach((record, index) => {
+        const week = getWeekOfYear(new Date(record.datetime));
+        if (!weekRecords[week]) {
+            weekRecords[week] = [];
+        }
+        weekRecords[week].push(record);
+    });
+
+    Object.keys(weekRecords).forEach((week, weekIndex) => {
+        table += `<tr><td colspan="9" style="text-align:center; font-weight:bold;">--Minggu ${parseInt(week)}--</td></tr>`;
+
+        weekRecords[week].forEach((record, recordIndex) => {
+            const id = (recordIndex % 5) + 1;
+            let attendanceIn = record.attendance_in === '-' ? '-' : 'Present';
+            let attendanceOut = record.attendance_out === '-' ? '-' : 'Present';
+            let finalAttendance = record.datetime_out ? attendanceOut : '-';
+            
+            // Logic to determine if the record is late based on the current time
+            let isLateIn = isLate(new Date(record.datetime));
+            let isLateOut = record.datetime_out ? isLate(new Date(record.datetime_out)) : false;
+
+            // Record untuk 'Check In'
+            table += `<tr>
+                <td>${id}</td>
+                <td><input type="text" value="${record.user_id}" id="user_id_${record.id}_in" class="form-control"></td>
+                <td>${record.full_name}</td>
+                <td><input type="text" value="${record.datetime}" id="datetime_${record.id}" class="form-control datetimepicker"></td>
+                <td>Check In</td>
+                <td>
+                    <select id="attendance_${record.id}_in" class="form-control">
+                        <option value="0" ${attendanceIn == '-' ? 'selected' : ''}>-</option>
+                        <option value="1" ${attendanceIn == 'Present' ? 'selected' : ''}>Present</option>
+                    </select>
+                </td>
+                <td>
+                    <select id="attendance_type_${record.id}_in" class="form-control">
+                        <option value="1" ${record.attendance_type_in == 'Fingerprint' ? 'selected' : ''}>Fingerprint Method</option>
+                        <option value="16" ${record.attendance_type_in == 'Face Recognition' ? 'selected' : ''}>Face Recognition Method</option>
+                    </select>
+                </td>
+                <td>${isLateIn ? 'Late' : 'On Time'}</td>
+                <td>
+                    <button onclick="saveRecord(${record.id}, 'in')" class="btn btn-primary">Save Changes</button>
+                    <button onclick="deleteRecord(${record.id})" class="btn btn-danger">Delete</button>
+                </td>
+            </tr>`;
+
+            // Record untuk 'Check Out'
+            table += `<tr>
+                <td></td>
+                <td><input type="text" value="${record.user_id}" id="user_id_${record.id}_out" class="form-control"></td>
+                <td>${record.full_name}</td>
+                <td><input type="text" value="${record.datetime_out || ''}" id="datetime_${record.id}_out" class="form-control datetimepicker"></td>
+                <td>Check Out</td>
+                <td>
+                    <select id="attendance_${record.id}_out" class="form-control">
+                        <option value="0" ${attendanceOut == '-' ? 'selected' : ''}>-</option>
+                        <option value="1" ${attendanceOut == 'Present' ? 'selected' : ''}>Present</option>
+                    </select>
+                </td>
+                <td>
+                    <select id="attendance_type_${record.id}_out" class="form-control">
+                        <option value="1" ${record.attendance_type_out == 'Fingerprint' ? 'selected' : ''}>Fingerprint Method</option>
+                        <option value="16" ${record.attendance_type_out == 'Face Recognition' ? 'selected' : ''}>Face Recognition Method</option>
+                    </select>
+                </td>
+                <td>${isLateOut ? 'Late' : '-'}</td>
+                <td>
+                    <button onclick="saveRecord(${record.id}, 'out')" class="btn btn-primary">Save Changes</button>
+                    <button onclick="deleteRecord(${record.id})" class="btn btn-danger">Delete</button>
+                </td>
+            </tr>`;
+        });
+    });
+
+    table += '</table>';
+    recordsDiv.innerHTML = table;
+
+    flatpickr(".datetimepicker", {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+    });
+}
+
+function isLate(date) {
+    const checkInTime = new Date(date);
+    const threshold = new Date(checkInTime);
+    threshold.setHours(9, 30, 0, 0); // Set threshold to 09:30:00
+    return checkInTime > threshold;
 }
 
 
@@ -141,16 +224,48 @@
             if (checkType == 0) { // Check In
                 attendanceSelect.value = 1; // Present
             } else if (checkType == 1) { // Check Out
-                attendanceSelect.value = 0; // Absent
+                attendanceSelect.value = 0; // -
             }
         }
 
-        function editRecord(id) {
-            let user_id = document.getElementById(`user_id_${id}`).value;
-            let datetime = document.getElementById(`datetime_${id}`).value;
-            let check_type = document.getElementById(`check_type_${id}`).value;
-            let attendance = document.getElementById(`attendance_${id}`).value;
-            let attendance_type = document.getElementById(`attendance_type_${id}`).value;
+        function saveRecord(id, type) {
+            let user_id = document.getElementById(`user_id_${id}_${type}`).value;
+            let datetime = document.getElementById(`datetime_${id}_${type}`).value;
+            let check_type = type;
+            let attendance = document.getElementById(`attendance_${id}_${type}`).value;
+            let attendance_type = document.getElementById(`attendance_type_${id}_${type}`).value;
+
+            let formData = new FormData();
+            formData.append('action', 'edit');
+            formData.append('id', id);
+            formData.append('user_id', user_id);
+            formData.append('datetime', datetime);
+            formData.append('check_type', check_type);
+            formData.append('attendance', attendance);
+            formData.append('attendance_type', attendance_type);
+
+            fetch('../manage_record.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    fetchRecords(); 
+                } else {
+                    console.error('Server error:', data.message);
+                }
+            })
+            .catch(error => console.error('Request failed:', error));
+        }
+
+
+        function editRecord(id, type) {
+            let user_id = document.getElementById(`user_id_${id}_${type}`).value;
+            let datetime = document.getElementById(`datetime_${id}_${type}`).value;
+            let check_type = type;
+            let attendance = document.getElementById(`attendance_${id}_${type}`).value;
+            let attendance_type = document.getElementById(`attendance_type_${id}_${type}`).value;
 
             let formData = new FormData();
             formData.append('action', 'edit');
@@ -287,11 +402,10 @@
 
         <div class="btn-container">
             <a href="../export.php" class="btn btn-success">Export to Excel</a>
-            <!-- Trigger Button for Modal -->
             <button class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
                 Delete Records
             </button>
-            <button class="btn btn-warning" onclick="autoCorrect()">Auto Correct Records</button>
+            <!-- <button class="btn btn-warning" onclick="autoCorrect()">Auto Correct Records</button> -->
         </div>
 
         <!-- Delete Records Modal -->

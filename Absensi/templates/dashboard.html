@@ -138,7 +138,7 @@
 
                     document.getElementById('totalRecords').textContent = data.total_records;
                     document.getElementById('present').textContent = data.present;
-                    document.getElementById('absent').textContent = data.absent;
+                    // document.getElementById('absent').textContent = data.absent;
                     document.getElementById('late').textContent = data.late;
                     document.getElementById('onTime').textContent = data.on_time;
 
@@ -156,7 +156,7 @@
                     new Chart(ctx, {
                         type: 'pie',
                         data: {
-                            labels: ['Present', 'Absent', 'Late', 'On Time'],
+                            labels: ['Present', 'Null', 'Late', 'On Time'],
                             datasets: [{
                                 data: [data.present, data.absent, data.late, data.on_time],
                                 backgroundColor: ['#4CAF50', '#FF5733', '#FFC107', '#2196F3'],

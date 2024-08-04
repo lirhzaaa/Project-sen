@@ -19,6 +19,11 @@
         .table-container {
             margin-top: 20px;
         }
+        .weekly-header {
+            background-color: #f8f9fa;
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -65,7 +70,7 @@
             </div>
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Absent</h5>
+                    <h5 class="card-title">Null (-)</h5>
                     <p class="card-text" id="absent"></p>
                 </div>
             </div>
@@ -138,214 +143,171 @@
         });
 
         function fetchUserStatistics() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('user_id');
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user_id');
 
-            if (!userId) {
-                document.getElementById('attendance-records').innerHTML = '<p class="text-danger">User ID is missing.</p>';
-                return;
-            }
+    if (!userId) {
+        document.getElementById('attendance-records').innerHTML = '<p class="text-danger">User ID is missing.</p>';
+        return;
+    }
 
-            fetch(`../fetch_statistics.php?user_id=${userId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        document.getElementById('attendance-records').innerHTML = `<p class="text-danger">${data.error}</p>`;
-                    } else {
-                        document.getElementById('user-name').textContent = `${data.user.full_name}'s User Statistics`;
+    fetch(`../fetch_statistics.php?user_id=${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('attendance-records').innerHTML = `<p class="text-danger">${data.error}</p>`;
+            } else {
+                document.getElementById('user-name').textContent = `${data.user.full_name}'s User Statistics`;
 
-                        document.getElementById('totalRecords').textContent = data.attendance.length;
-                        const presentCount = data.attendance.filter(record => record.attendance > 0).length;
-                        const absentCount = data.attendance.filter(record => record.attendance == 0).length;
-                        const lateCount = data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getHours() >= 10).length;
-                        const onTimeCount = presentCount - lateCount;
-                        document.getElementById('present').textContent = presentCount;
-                        document.getElementById('absent').textContent = absentCount;
-                        document.getElementById('late').textContent = lateCount;
-                        document.getElementById('onTime').textContent = onTimeCount;
+                document.getElementById('totalRecords').textContent = data.attendance.length;
+                const presentCount = data.attendance.filter(record => record.attendance > 0).length;
+                const absentCount = data.attendance.filter(record => record.attendance == 0).length;
+                const lateCount = data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getHours() >= 10).length;
+                const onTimeCount = presentCount - lateCount;
+                document.getElementById('present').textContent = presentCount;
+                document.getElementById('absent').textContent = absentCount;
+                document.getElementById('late').textContent = lateCount;
+                document.getElementById('onTime').textContent = onTimeCount;
 
-                        const lateStatistics = `
-                            Total Late: ${lateCount}<br>
-                            <ul>
-                                <li>15-30 minutes late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 15 && new Date(record.datetime).getMinutes() < 30).length}</li>
-                                <li>30-60 minutes late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 30 && new Date(record.datetime).getMinutes() < 60).length}</li>
-                                <li>More than an hour late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 60).length}</li>
-                            </ul>
-                        `;
-                        document.getElementById('lateStatistics').innerHTML = lateStatistics;
+                const lateStatistics = `
+                    Total Late: ${lateCount}<br>
+                    <ul>
+                        <li>15-30 minutes late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 15 && new Date(record.datetime).getMinutes() < 30).length}</li>
+                        <li>30-60 minutes late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 30 && new Date(record.datetime).getMinutes() < 60).length}</li>
+                        <li>More than an hour late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 60).length}</li>
+                    </ul>
+                `;
+                document.getElementById('lateStatistics').innerHTML = lateStatistics;
 
-                        const ctx = document.getElementById('attendanceChart').getContext('2d');
-                        new Chart(ctx, {
-                            type: 'pie',
-                            data: {
-                                labels: ['Present', 'Absent', 'Late', 'On Time'],
-                                datasets: [{
-                                    data: [presentCount, absentCount, lateCount, onTimeCount],
-                                    backgroundColor: ['#4CAF50', '#FF5733', '#FFC107', '#2196F3'],
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'top',
-                                    },
-                                    title: {
-                                        display: true,
-                                        text: 'Attendance Statistics'
-                                    }
-                                }
-                            }
-                        });
-
-                        const dateWiseStats = data.attendance.reduce((acc, record) => {
-                            const date = new Date(record.datetime).toISOString().split('T')[0];
-                            if (!acc[date]) {
-                                acc[date] = { late_count: 0, on_time_count: 0 };
-                            }
-                            if (record.attendance > 0 && new Date(record.datetime).getHours() >= 10) {
-                                acc[date].late_count++;
-                            } else if (record.attendance > 0) {
-                                acc[date].on_time_count++;
-                            }
-                            return acc;
-                        }, {});
-
-                        const dateWiseLabels = Object.keys(dateWiseStats);
-                        const lateData = dateWiseLabels.map(date => dateWiseStats[date].late_count);
-                        const onTimeData = dateWiseLabels.map(date => dateWiseStats[date].on_time_count);
-
-                        const dateWiseCtx = document.getElementById('dateWiseChart').getContext('2d');
-                        new Chart(dateWiseCtx, {
-                            type: 'line',
-                            data: {
-                                labels: dateWiseLabels,
-                                datasets: [
-                                    {
-                                        label: 'Late Attendance',
-                                        data: lateData,
-                                        borderColor: '#FF5733',
-                                        fill: false
-                                    },
-                                    {
-                                        label: 'On Time Attendance',
-                                        data: onTimeData,
-                                        borderColor: '#4CAF50',
-                                        fill: false
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'top',
-                                    },
-                                    title: {
-                                        display: true,
-                                        text: 'Date Wise Attendance'
-                                    }
-                                }
-                            }
-                        });
-
-                        const tableBody = document.getElementById('attendance-table-body');
-                        tableBody.innerHTML = data.attendance.map(record => `
-                            <tr>
-                                <td>${record.id}</td>
-                                <td><input type="text" value="${record.user_id}" id="user_id_${record.id}" class="form-control"></td> 
-                                <td>${data.user.full_name}</td>
-                                <td><input type="text" value="${record.datetime}" id="datetime_${record.id}" class="form-control datetimepicker"></td>
-                                <td>
-                                    <select id="check_type_${record.id}" class="form-control">
-                                        <option value="0" ${record.check_type == 0 ? 'selected' : ''}>Check In</option>
-                                        <option value="1" ${record.check_type == 1 ? 'selected' : ''}>Check Out</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select id="attendance_${record.id}" class="form-control">
-                                        <option value="0" ${record.attendance == 'Absent' ? 'selected' : ''}>Absent</option>
-                                        <option value="1" ${record.attendance == 'Present' ? 'selected' : ''}>Present</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select id="attendance_type_${record.id}" class="form-control">
-                                        <option value="1" ${record.attendance_type == 'Fingerprint' ? 'selected' : ''}>Fingerprint Method</option>
-                                        <option value="16" ${record.attendance_type == 'Face Recognition' ? 'selected' : ''}>Face Recognition Method</option>
-                                    </select>
-                                </td>
-                                <td>${record.is_late == 1 ? 'Yes' : 'No'}</td>
-                                <td>
-                                    <button onclick="editRecord(${record.id})" class="btn btn-primary">Save Changes</button>
-                                    <button onclick="deleteRecord(${record.id})" class="btn btn-danger">Delete</button>
-                                </td>
-                            </tr>
-                        `).join('');
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('attendance-records').innerHTML = `<p class="text-danger">Failed to load user statistics. Please try again later.</p>`;
-                    console.error('Error fetching user statistics:', error);
-                });
-        }
-
-        function editRecord(id) {
-            // Implement save logic here
-            const userId = document.getElementById(`user_id_${id}`).value;
-            const datetime = document.getElementById(`datetime_${id}`).value;
-            const checkType = document.getElementById(`check_type_${id}`).value;
-            const attendance = document.getElementById(`attendance_${id}`).value;
-            const attendanceType = document.getElementById(`attendance_type_${id}`).value;
-            const isLate = document.querySelector(`#attendance-table-body tr:nth-child(${id}) td:nth-child(8)`).textContent.trim() === 'Yes' ? 1 : 0;
-
-            fetch(`../update_record.php`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id, userId, datetime, checkType, attendance, attendanceType, isLate })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Record updated successfully!');
-                } else {
-                    alert('Failed to update record.');
-                }
-                fetchUserStatistics(); // Reload statistics to reflect changes
-            })
-            .catch(error => {
-                console.error('Error updating record:', error);
-            });
-        }
-
-        function deleteRecord(id) {
-            if (confirm('Are you sure you want to delete this record?')) {
-                fetch(`../delete_record.php`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
+                const ctx = document.getElementById('attendanceChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Present', 'Null', 'Late', 'On Time'],
+                        datasets: [{
+                            data: [presentCount, absentCount, lateCount, onTimeCount],
+                            backgroundColor: ['#4CAF50', '#FF5733', '#FFC107', '#2196F3'],
+                        }]
                     },
-                    body: JSON.stringify({ id })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Record deleted successfully!');
-                        fetchUserStatistics(); // Reload statistics to reflect changes
-                    } else {
-                        alert('Failed to delete record.');
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Attendance Statistics'
+                            }
+                        }
                     }
-                })
-                .catch(error => {
-                    console.error('Error deleting record:', error);
                 });
+
+                const dateWiseStats = data.attendance.reduce((acc, record) => {
+                    const date = new Date(record.datetime).toISOString().split('T')[0];
+                    if (!acc[date]) {
+                        acc[date] = { late_count: 0, on_time_count: 0 };
+                    }
+                    if (record.attendance > 0) {
+                        if (new Date(record.datetime).getHours() >= 10) {
+                            acc[date].late_count += 1;
+                        } else {
+                            acc[date].on_time_count += 1;
+                        }
+                    }
+                    return acc;
+                }, {});
+
+                const dates = Object.keys(dateWiseStats);
+                const lateCounts = dates.map(date => dateWiseStats[date].late_count);
+                const onTimeCounts = dates.map(date => dateWiseStats[date].on_time_count);
+
+                const ctxDateWise = document.getElementById('dateWiseChart').getContext('2d');
+                new Chart(ctxDateWise, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Late',
+                                data: lateCounts,
+                                backgroundColor: '#FF5733'
+                            },
+                            {
+                                label: 'On Time',
+                                data: onTimeCounts,
+                                backgroundColor: '#4CAF50'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Count'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const tableBody = document.getElementById('attendance-table-body');
+                tableBody.innerHTML = '';
+
+                data.attendance.forEach(record => {
+                    const attendanceText = record.attendance === 1 ? 'Present' : (record.attendance === 0 ? 'Absent' : '-');
+                    const checkTypeText = record.check_type === 0 ? 'Check In' : 'Check Out';
+                    const attendanceTypeText = record.attendance_type === 1 ? 'Fingerprint Method' : 'Face Recognition Method';
+                    const lateText = record.is_late === 1 ? 'Late' : 'On Time';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.id}</td>
+                        <td>${record.user_id}</td>
+                        <td>${data.user.full_name}</td>
+                        <td>${record.datetime}</td>
+                        <td>${checkTypeText}</td>
+                        <td>${attendanceText}</td>
+                        <td>${attendanceTypeText}</td>
+                        <td>${lateText}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteRecord(${record.id})">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching statistics:', error);
+            document.getElementById('attendance-records').innerHTML = '<p class="text-danger">An error occurred while fetching statistics. Please try again later.</p>';
+        });
+}
+
+
+        function saveChanges(attendanceId) {
+            // Implement logic to save changes
+            console.log('Save changes for attendance ID:', attendanceId);
+        }
+
+        function deleteRecord(attendanceId) {
+            if (confirm('Are you sure you want to delete this record?')) {
+                // Implement logic to delete record
+                console.log('Delete record with ID:', attendanceId);
             }
         }
 
-        fetchUserStatistics();
+        document.addEventListener('DOMContentLoaded', fetchUserStatistics);
     </script>
 </body>
 </html>

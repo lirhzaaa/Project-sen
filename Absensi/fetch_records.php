@@ -18,16 +18,16 @@ $is_late = isset($_GET['is_late']) ? $_GET['is_late'] : null; // Add filter for 
 $attendance_type = isset($_GET['attendance_type']) ? $_GET['attendance_type'] : null; // Add filter for attendance type
 
 // Attendance Mapping 
-$attendanceMapping = [ // Separate mapping for attendance status
-    null => 'Absent', // Map null to 'Absent'
-    '0' => 'Absent', // Map '0' to 'Absent'
-    '1' => 'Present', // Add mapping for fingerprint
-    '16' => 'Present' // Add mapping for face recognition
+$attendanceMapping = [ 
+    null => 'Absent', 
+    '0' => 'Absent', 
+    '1' => 'Present', 
+    '16' => 'Present' 
 ];
 
-$attendanceTypeMapping = [ // Separate mapping for attendance type
-    '1' => 'Fingerprint', // Map '1' to 'Fingerprint'
-    '16' => 'Face Recognition' // Map '16' to 'Face Recognition'
+$attendanceTypeMapping = [ 
+    '1' => 'Fingerprint', 
+    '16' => 'Face Recognition' 
 ];
 
 // Query Construction
@@ -74,18 +74,30 @@ error_log("Params: " . json_encode($params));
 // Check if query execution is successful
 if (!$stmt->execute($params)) {
     error_log("Error executing query: " . json_encode($stmt->errorInfo()));
-    http_response_code(500); // Send an internal server error response
+    http_response_code(500); 
     echo json_encode(["error" => "An error occurred while fetching data."]);
     exit();
 }
 
-$records = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch all records
-error_log("Fetched records: " . json_encode($records)); // Log fetched records
+$records = $stmt->fetchAll(PDO::FETCH_ASSOC); 
+error_log("Fetched records: " . json_encode($records)); 
 
 // Translate attendance status back to keywords for display
 foreach ($records as &$record) {
     $record['attendance'] = $attendanceMapping[$record['attendance']] ?? 'Unknown'; 
-    $record['attendance_type'] = $attendanceTypeMapping[$record['attendance_type']] ?? 'Unknown'; // Translate attendance type
+    $record['attendance_type'] = $attendanceTypeMapping[$record['attendance_type']] ?? 'Unknown'; 
+
+    // Check for check-out based on DateTime
+    $datetime = new DateTime($record['datetime']);
+    $hour = (int)$datetime->format('H');
+
+    if ($hour >= 17 || $hour < 1) {
+        $record['datetime_out'] = $record['datetime'];
+        $record['attendance_out'] = 'Present';
+    } else {
+        $record['datetime_out'] = '-';
+        $record['attendance_out'] = '-';
+    }
 }
 
 header('Content-Type: application/json');

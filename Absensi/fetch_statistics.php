@@ -18,7 +18,21 @@ if ($user_id !== null) {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        $stmt = $pdo->prepare('SELECT datetime, attendance FROM attendance_records WHERE user_id = :user_id');
+        $stmt = $pdo->prepare('
+            SELECT 
+                id,
+                user_id,
+                datetime,
+                check_type,
+                attendance,
+                attendance_type,
+                CASE 
+                    WHEN TIME(datetime) > "09:45:00" THEN 1 
+                    ELSE 0 
+                END AS late
+            FROM attendance_records 
+            WHERE user_id = :user_id
+        ');
         $stmt->bindParam(':user_id', $user_id);
         $stmt->execute();
         $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);

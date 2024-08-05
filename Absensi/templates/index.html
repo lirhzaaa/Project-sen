@@ -7,47 +7,87 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
+        /* Global Styles */
+        body {
+            background-color: #f8f9fa; /* Light background for better readability */
+            font-family: Arial, sans-serif;
+        }
+        
+        .navbar {
+            margin-bottom: 20px;
+        }
+
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .container {
+            background-color: #fff; /* White background for the content area */
+            border-radius: 8px; /* Rounded corners for the container */
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        }
+
         .btn-container {
             display: flex;
-            gap: 10px; /* Space between buttons */
-            margin-top: 20px; /* Space above the buttons */
+            gap: 15px; /* Increased space between buttons */
+            margin-bottom: 20px; /* Space below the buttons */
         }
+
+        .btn-container .btn {
+            font-size: 14px; /* Consistent font size for buttons */
+        }
+
+        .modal-content {
+            border-radius: 8px; /* Rounded corners for modal */
+        }
+
         .modal-body button {
             margin-bottom: 10px; /* Space between modal buttons */
         }
+
         .filter-form {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px; /* Increased space between filter items */
             margin-bottom: 20px;
         }
+
         .filter-form .form-group {
             flex: 1;
-            min-width: 150px;
+            min-width: 200px; /* Increased minimum width for better readability */
         }
-        /* Table Styling */
+
+        /* Table Styles */
         #records table {
-            width: 100%; /* Ensure the table fills the container */
+            width: 100%;
+            border-collapse: collapse; /* Collapse borders for cleaner look */
         }
 
         #records th, #records td {
-            padding: 10px; /* Add padding to cells */
-            text-align: left; /* Align text to the left */
-            vertical-align: middle; /* Vertically center text in cells */
-            border-bottom: 1px solid #ddd; /* Add a subtle border to separate rows */
+            padding: 12px; /* Increased padding for cells */
+            text-align: left;
+            vertical-align: middle;
+            border-bottom: 1px solid #e0e0e0; /* Subtle border for row separation */
         }
 
         #records th {
-            background-color: #f2f2f2; /* Light gray background for headers */
+            background-color: #e9ecef; /* Light gray background for headers */
+            font-weight: bold; /* Bold text for headers */
         }
 
-        #records input[type="text"].form-control {
-            max-width: 120px; /* Limit the width of user_id input fields */
+        #records td input[type="text"].form-control {
+            max-width: 150px; /* Slightly wider input fields */
         }
 
         #records .form-control {
+            height: auto;
+            padding: 8px; /* Adjusted padding for better fit */
+        }
+        
+        .filter-form select.form-control {
             height: auto; /* Adjust height to better fit content */
-            padding: 5px; /* Reduce padding for a more compact look */
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

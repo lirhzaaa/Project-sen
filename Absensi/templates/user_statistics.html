@@ -120,7 +120,7 @@
                         <th>Attendance</th>
                         <th>Attendance Type</th>
                         <th>Late</th>
-                        <th>Actions</th>
+                        <!-- <th>Actions</th> -->
                     </tr>
                 </thead>
                 <tbody id="attendance-table-body">
@@ -281,7 +281,6 @@
                         <td>${attendanceTypeText}</td>
                         <td>${lateText}</td>
                         <td>
-                            <button class="btn btn-danger" onclick="deleteRecord(${record.id})">Delete</button>
                         </td>
                     `;
                     tableBody.appendChild(row);

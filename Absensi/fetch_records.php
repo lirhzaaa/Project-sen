@@ -19,15 +19,11 @@ $attendance_type = isset($_GET['attendance_type']) ? $_GET['attendance_type'] : 
 
 // Attendance Mapping 
 $attendanceMapping = [ 
-    null => 'Absent', 
     '0' => 'Absent', 
     '1' => 'Present', 
-    '16' => 'Present' 
-];
-
-$attendanceTypeMapping = [ 
-    '1' => 'Fingerprint', 
-    '16' => 'Face Recognition' 
+    '2' => 'Dispen',
+    '3' => 'Sakit',
+    '4' => 'Alfa'
 ];
 
 // Query Construction
@@ -85,7 +81,6 @@ error_log("Fetched records: " . json_encode($records));
 // Translate attendance status back to keywords for display
 foreach ($records as &$record) {
     $record['attendance'] = $attendanceMapping[$record['attendance']] ?? 'Unknown'; 
-    $record['attendance_type'] = $attendanceTypeMapping[$record['attendance_type']] ?? 'Unknown'; 
 
     // Check for check-out based on DateTime
     $datetime = new DateTime($record['datetime']);

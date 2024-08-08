@@ -74,8 +74,26 @@
             </div>
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Absent</h5>
+                    <h5 class="card-title">Null (-)</h5>
                     <p class="card-text" id="absent"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Dispen</h5>
+                    <p class="card-text" id="dispen"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Sakit</h5>
+                    <p class="card-text" id="sakit"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Alfa</h5>
+                    <p class="card-text" id="alfa"></p>
                 </div>
             </div>
             <div class="card">
@@ -138,7 +156,10 @@
 
                     document.getElementById('totalRecords').textContent = data.total_records;
                     document.getElementById('present').textContent = data.present;
-                    // document.getElementById('absent').textContent = data.absent;
+                    document.getElementById('absent').textContent = data.absent;
+                    document.getElementById('dispen').textContent = data.dispen;
+                    document.getElementById('sakit').textContent = data.sakit;
+                    document.getElementById('alfa').textContent = data.alfa;
                     document.getElementById('late').textContent = data.late;
                     document.getElementById('onTime').textContent = data.on_time;
 
@@ -156,9 +177,9 @@
                     new Chart(ctx, {
                         type: 'pie',
                         data: {
-                            labels: ['Present', 'Null', 'Late', 'On Time'],
+                            labels: ['Present', 'Null', 'Dispen' , 'Sakit', 'Alfa', 'Late', 'On Time'],
                             datasets: [{
-                                data: [data.present, data.absent, data.late, data.on_time],
+                                data: [data.present, data.absent, data.dispen, data.sakit, data.alfa, data.late, data.on_time],
                                 backgroundColor: ['#4CAF50', '#FF5733', '#FFC107', '#2196F3'],
                             }]
                         },

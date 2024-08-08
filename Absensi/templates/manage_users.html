@@ -86,7 +86,10 @@
                 <div class="card card-body">
                     <p>Total Users: <span id="totalUsers">0</span></p>
                     <p>Present Users: <span id="presentUsers">0</span></p>
-                    <p>Absent Users: <span id="absentUsers">0</span></p>
+                    <p>Null Users: <span id="absentUsers">0</span></p>
+                    <p>Dispen Users: <span id="dispenUsers">0</span></p>
+                    <p>Sakit Users: <span id="sakitUsers">0</span></p>
+                    <p>Alfa Users: <span id="alfaUsers">0</span></p>
                 </div>
             </div>
         </div>
@@ -160,6 +163,9 @@
                     let totalUsers = 0;
                     let presentUsers = 0;
                     let absentUsers = 0;
+                    let dispenUsers = 0;
+                    let sakitUsers = 0;
+                    let alfaUsers = 0;
 
                     if (data.length === 0) {
                         const row = tableBody.insertRow();
@@ -186,6 +192,9 @@
                     document.getElementById('totalUsers').textContent = totalUsers;
                     document.getElementById('presentUsers').textContent = presentUsers;
                     document.getElementById('absentUsers').textContent = absentUsers;
+                    document.getElementById('dispenUsers').textContent = dispenUsers;
+                    document.getElementById('sakitUsers').textContent = sakitUsers;
+                    document.getElementById('alfaUsers').textContent = alfaUsers;
                 })
                 .catch(error => {
                     document.getElementById('loading').style.display = 'none';

@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Statistics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .chart-wrapper {
@@ -19,10 +23,8 @@
         .table-container {
             margin-top: 20px;
         }
-        .weekly-header {
-            background-color: #f8f9fa;
-            text-align: center;
-            font-weight: bold;
+        .card-container .card {
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -55,7 +57,8 @@
 
     <div class="container mt-4">
         <h1 id="user-name">User Statistics</h1>
-        <div class="card-container">
+        <div class="card-container d-flex flex-wrap">
+            <!-- Cards for statistics -->
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Total Records</h5>
@@ -72,6 +75,24 @@
                 <div class="card-body">
                     <h5 class="card-title">Null (-)</h5>
                     <p class="card-text" id="absent"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Dispen</h5>
+                    <p class="card-text" id="dispen"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Sakit</h5>
+                    <p class="card-text" id="sakit"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Alfa</h5>
+                    <p class="card-text" id="alfa"></p>
                 </div>
             </div>
             <div class="card">
@@ -118,9 +139,8 @@
                         <th>Date Time</th>
                         <th>Check Type</th>
                         <th>Attendance</th>
-                        <th>Attendance Type</th>
-                        <th>Late</th>
-                        <!-- <th>Actions</th> -->
+                        <th>Keterlambatan</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="attendance-table-body">
@@ -128,26 +148,31 @@
                 </tbody>
             </table>
         </div>
-    </div>
+        
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/eonasdan-bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/eonasdan-bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
+<script>
+    
+// Inisialisasi flatpickr pada elemen input tanggal
+document.addEventListener('DOMContentLoaded', function () {
+    flatpickr('.datetimepicker', {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+    });
+});
 
-    <script>
-        $(function () {
-            $('.datetimepicker').datetimepicker();
-        });
-
-        function fetchUserStatistics() {
+function fetchUserStatistics() {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('user_id');
 
     if (!userId) {
-        document.getElementById('attendance-records').innerHTML = '<p class="text-danger">User ID is missing.</p>';
+        document.getElementById('user-name').innerHTML = '<p class="text-danger">User ID is missing.</p>';
         return;
     }
 
@@ -155,15 +180,16 @@
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                document.getElementById('attendance-records').innerHTML = `<p class="text-danger">${data.error}</p>`;
+                document.getElementById('user-name').innerHTML = `<p class="text-danger">${data.error}</p>`;
             } else {
                 document.getElementById('user-name').textContent = `${data.user.full_name}'s User Statistics`;
 
-                document.getElementById('totalRecords').textContent = data.attendance.length;
-                const presentCount = data.attendance.filter(record => record.attendance > 0).length;
-                const absentCount = data.attendance.filter(record => record.attendance == 0).length;
-                const lateCount = data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getHours() >= 10).length;
-                const onTimeCount = presentCount - lateCount;
+                const attendance = data.attendance;
+                document.getElementById('totalRecords').textContent = attendance.length;
+                const presentCount = attendance.filter(record => record.attendance > 0).length;
+                const absentCount = attendance.filter(record => record.attendance === 0).length;
+                const lateCount = attendance.filter(record => record.late === 1).length;
+                const onTimeCount = attendance.length - lateCount;
                 document.getElementById('present').textContent = presentCount;
                 document.getElementById('absent').textContent = absentCount;
                 document.getElementById('late').textContent = lateCount;
@@ -172,9 +198,9 @@
                 const lateStatistics = `
                     Total Late: ${lateCount}<br>
                     <ul>
-                        <li>15-30 minutes late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 15 && new Date(record.datetime).getMinutes() < 30).length}</li>
-                        <li>30-60 minutes late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 30 && new Date(record.datetime).getMinutes() < 60).length}</li>
-                        <li>More than an hour late: ${data.attendance.filter(record => record.attendance > 0 && new Date(record.datetime).getMinutes() >= 60).length}</li>
+                        <li>15-30 minutes late: ${attendance.filter(record => record.late === 1 && new Date(record.datetime).getMinutes() >= 15 && new Date(record.datetime).getMinutes() < 30).length}</li>
+                        <li>30-60 minutes late: ${attendance.filter(record => record.late === 1 && new Date(record.datetime).getMinutes() >= 30 && new Date(record.datetime).getMinutes() < 60).length}</li>
+                        <li>More than an hour late: ${attendance.filter(record => record.late === 1 && new Date(record.datetime).getMinutes() >= 60).length}</li>
                     </ul>
                 `;
                 document.getElementById('lateStatistics').innerHTML = lateStatistics;
@@ -204,46 +230,45 @@
                     }
                 });
 
-                const dateWiseStats = data.attendance.reduce((acc, record) => {
-                    const date = new Date(record.datetime).toISOString().split('T')[0];
-                    if (!acc[date]) {
-                        acc[date] = { late_count: 0, on_time_count: 0 };
+                const dateWiseAttendance = {};
+                attendance.forEach(record => {
+                    const date = new Date(record.datetime);
+                    const monthDay = date.toISOString().split('T')[0].substring(5); // Extract month and day
+                    if (!dateWiseAttendance[monthDay]) {
+                        dateWiseAttendance[monthDay] = { in: [], out: [] };
                     }
-                    if (record.attendance > 0) {
-                        if (new Date(record.datetime).getHours() >= 10) {
-                            acc[date].late_count += 1;
-                        } else {
-                            acc[date].on_time_count += 1;
-                        }
+                    if (record.attendance === 1) {
+                        dateWiseAttendance[monthDay].in.push(record);
+                    } else {
+                        dateWiseAttendance[monthDay].out.push(record);
                     }
-                    return acc;
-                }, {});
+                });
 
-                const dates = Object.keys(dateWiseStats);
-                const lateCounts = dates.map(date => dateWiseStats[date].late_count);
-                const onTimeCounts = dates.map(date => dateWiseStats[date].on_time_count);
-
-                const ctxDateWise = document.getElementById('dateWiseChart').getContext('2d');
-                new Chart(ctxDateWise, {
-                    type: 'bar',
+                const dateWiseCtx = document.getElementById('dateWiseChart').getContext('2d');
+                new Chart(dateWiseCtx, {
+                    type: 'line',
                     data: {
-                        labels: dates,
-                        datasets: [
-                            {
-                                label: 'Late',
-                                data: lateCounts,
-                                backgroundColor: '#FF5733'
-                            },
-                            {
-                                label: 'On Time',
-                                data: onTimeCounts,
-                                backgroundColor: '#4CAF50'
-                            }
-                        ]
+                        labels: Object.keys(dateWiseAttendance),
+                        datasets: [{
+                            label: 'Attendance Count',
+                            data: Object.values(dateWiseAttendance).map(records => records.in.length + records.out.length),
+                            borderColor: '#FF5733',
+                            backgroundColor: 'rgba(255, 87, 51, 0.2)',
+                            borderWidth: 1,
+                        }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date Wise Attendance'
+                            }
+                        },
                         scales: {
                             x: {
                                 title: {
@@ -255,58 +280,142 @@
                                 title: {
                                     display: true,
                                     text: 'Count'
-                                }
+                                },
+                                beginAtZero: true
                             }
                         }
                     }
                 });
 
-                const tableBody = document.getElementById('attendance-table-body');
-                tableBody.innerHTML = '';
+                // Update the attendance table
+                document.getElementById('attendance-table-body').innerHTML = Object.keys(dateWiseAttendance).map((monthDay, index) => {
+                    const records = dateWiseAttendance[monthDay];
+                    const firstRecord = records.in[0] || records.out[0];
+                    const userId = firstRecord.user_id;
+                    const fullName = data.user.full_name;
+                    const datetimeIn = records.in.length > 0 ? moment(records.in[0].datetime).format('YYYY-MM-DD HH:mm:ss') : '';
+                    const datetimeOut = records.out.length > 0 ? moment(records.out[0].datetime).format('YYYY-MM-DD HH:mm:ss') : '';
 
-                data.attendance.forEach(record => {
-                    const attendanceText = record.attendance === 1 ? 'Present' : (record.attendance === 0 ? 'Absent' : '-');
-                    const checkTypeText = record.check_type === 0 ? 'Check In' : 'Check Out';
-                    const attendanceTypeText = record.attendance_type === 1 ? 'Fingerprint Method' : 'Face Recognition Method';
-                    const lateText = record.is_late === 1 ? 'Late' : 'On Time';
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><input type="text" value="${userId}" class="form-control"></td>
+                            <td>${fullName}</td>
+                            <td><input type="datetime-local" value="${datetimeIn}" class="form-control datetimepicker"></td>
+                            <td>Check In</td>
+                            <td>
+                                <select class="form-control">
+                                    <option value="0" ${records.in.length > 0 && records.in[0].attendance === 0 ? 'selected' : ''}>-</option>
+                                    <option value="1" ${records.in.length > 0 && records.in[0].attendance === 1 ? 'selected' : ''}>Hadir</option>
+                                    <option value="2" ${records.in.length > 0 && records.in[0].attendance === 2 ? 'selected' : ''}>Dispen</option>
+                                    <option value="3" ${records.in.length > 0 && records.in[0].attendance === 3 ? 'selected' : ''}>Sakit</option>
+                                    <option value="4" ${records.in.length > 0 && records.in[0].attendance === 4 ? 'selected' : ''}>Alfa</option>
+                                </select>
+                            </td>
+                            <td>${records.in.length > 0 ? (records.in[0].late === 1 ? 'Late' : 'On Time') : '-'}</td>
+                            <td>
+                                <button onclick="saveRecord(${firstRecord.id}, 'in')" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Change
+                                </button>
+                                <button onclick="deleteRecord(${firstRecord.id})" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><input type="text" value="${userId}" class="form-control"></td>
+                            <td>${fullName}</td>
+                            <td><input type="datetime-local" value="${datetimeOut}" class="form-control datetimepicker"></td>
+                            <td>Check Out</td>
+                            <td>
+                                <select class="form-control">
+                                    <option value="0" ${records.out.length > 0 && records.out[0].attendance === 0 ? 'selected' : ''}>-</option>
+                                    <option value="1" ${records.out.length > 0 && records.out[0].attendance === 1 ? 'selected' : ''}>Hadir</option>
+                                    <option value="2" ${records.out.length > 0 && records.out[0].attendance === 2 ? 'selected' : ''}>Dispen</option>
+                                    <option value="3" ${records.out.length > 0 && records.out[0].attendance === 3 ? 'selected' : ''}>Sakit</option>
+                                    <option value="4" ${records.out.length > 0 && records.out[0].attendance === 4 ? 'selected' : ''}>Alfa</option>
+                                </select>
+                            </td>
+                            <td>${records.out.length > 0 ? (records.out[0].late === 1 ? 'Late' : 'On Time') : '-'}</td>
+                            <td>
+                                <button onclick="saveRecord(${firstRecord.id}, 'out')" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Change
+                                </button>
+                                <button onclick="deleteRecord(${firstRecord.id})" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </td>
 
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${record.id}</td>
-                        <td>${record.user_id}</td>
-                        <td>${data.user.full_name}</td>
-                        <td>${record.datetime}</td>
-                        <td>${checkTypeText}</td>
-                        <td>${attendanceText}</td>
-                        <td>${attendanceTypeText}</td>
-                        <td>${lateText}</td>
-                        <td>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
+                        </tr>`;
+                }).join('');
+                
+                // Reinitialize datetime pickers after table update
+                $('.datetimepicker').datetimepicker({
+                    format: 'YYYY-MM-DD HH:mm:ss'
                 });
             }
         })
-        .catch(error => {
-            console.error('Error fetching statistics:', error);
-            document.getElementById('attendance-records').innerHTML = '<p class="text-danger">An error occurred while fetching statistics. Please try again later.</p>';
-        });
+        .catch(error => console.error('Error fetching user statistics:', error));
 }
 
-
-        function saveChanges(attendanceId) {
-            // Implement logic to save changes
-            console.log('Save changes for attendance ID:', attendanceId);
+function saveRecord(id, type) {
+    const row = $(event.target).closest('tr');
+    const userId = row.find('input').eq(0).val();
+    const datetime = row.find('input').eq(1).val();
+    const attendance = row.find('select').val();
+    
+    const data = {
+        id: id,
+        user_id: userId,
+        datetime: datetime,
+        attendance: attendance,
+        type: type
+    };
+    
+    fetch('../save_record.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Record saved successfully.');
+        } else {
+            alert('Failed to save record.');
         }
+    })
+    .catch(error => console.error('Error saving record:', error));
+}
 
-        function deleteRecord(attendanceId) {
-            if (confirm('Are you sure you want to delete this record?')) {
-                // Implement logic to delete record
-                console.log('Delete record with ID:', attendanceId);
+function deleteRecord(id) {
+    if (confirm('Are you sure you want to delete this record?')) {
+        fetch('../delete_record.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: id })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Record deleted successfully.');
+                fetchUserStatistics(); // Refresh the statistics after deletion
+            } else {
+                alert('Failed to delete record.');
             }
-        }
+        })
+        .catch(error => console.error('Error deleting record:', error));
+    }
+}
 
-        document.addEventListener('DOMContentLoaded', fetchUserStatistics);
-    </script>
+// Fetch user statistics on page load
+fetchUserStatistics();
+</script>
+ 
 </body>
 </html>

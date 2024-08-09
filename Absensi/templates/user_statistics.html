@@ -286,67 +286,67 @@
                             }
                         });
         
-                        // Update the attendance table
                         document.getElementById('attendance-table-body').innerHTML = Object.keys(dateWiseAttendance).map((monthDay, index) => {
-                            const records = dateWiseAttendance[monthDay];
-                            const firstRecord = records.in[0] || records.out[0];
-                            const userId = firstRecord.user_id;
-                            const fullName = data.user.full_name;
-                            const datetimeIn = records.in.length > 0 ? moment(records.in[0].datetime).format('YYYY-MM-DDTHH:mm') : '';
-                            const datetimeOut = records.out.length > 0 ? moment(records.out[0].datetime).format('YYYY-MM-DDTHH:mm') : '';
-        
-                            return `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td><input type="text" value="${userId}" class="form-control"></td>
-                                    <td>${fullName}</td>
-                                    <td><input type="datetime-local" value="${datetimeIn}" class="form-control datetimepicker"></td>
-                                    <td>Check In</td>
-                                    <td>
-                                        <select class="form-control">
-                                            <option value="0" ${records.in.length > 0 && records.in[0].attendance === 0 ? 'selected' : ''}>-</option>
-                                            <option value="1" ${records.in.length > 0 && records.in[0].attendance === 1 ? 'selected' : ''}>Hadir</option>
-                                            <option value="2" ${records.in.length > 0 && records.in[0].attendance === 2 ? 'selected' : ''}>Dispen</option>
-                                            <option value="3" ${records.in.length > 0 && records.in[0].attendance === 3 ? 'selected' : ''}>Sakit</option>
-                                            <option value="4" ${records.in.length > 0 && records.in[0].attendance === 4 ? 'selected' : ''}>Alfa</option>
-                                        </select>
-                                    </td>
-                                    <td>${records.in.length > 0 ? (records.in[0].late === 1 ? 'Late' : 'On Time') : '-'}</td>
-                                    <td>
-                                        <button onclick="saveRecord(${firstRecord.id}, 'in')" class="btn btn-primary">
-                                            <i class="fas fa-save"></i> Save Change
-                                        </button>
-                                        <button onclick="deleteRecord(${firstRecord.id})" class="btn btn-danger">
-                                            <i class="fas fa-trash-alt"></i> Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td><input type="text" value="${userId}" class="form-control"></td>
-                                    <td>${fullName}</td>
-                                    <td><input type="datetime-local" value="${datetimeOut}" class="form-control datetimepicker"></td>
-                                    <td>Check Out</td>
-                                    <td>
-                                        <select class="form-control">
-                                            <option value="0" ${records.out.length > 0 && records.out[0].attendance === 0 ? 'selected' : ''}>-</option>
-                                            <option value="1" ${records.out.length > 0 && records.out[0].attendance === 1 ? 'selected' : ''}>Hadir</option>
-                                            <option value="2" ${records.out.length > 0 && records.out[0].attendance === 2 ? 'selected' : ''}>Dispen</option>
-                                            <option value="3" ${records.out.length > 0 && records.out[0].attendance === 3 ? 'selected' : ''}>Sakit</option>
-                                            <option value="4" ${records.out.length > 0 && records.out[0].attendance === 4 ? 'selected' : ''}>Alfa</option>
-                                        </select>
-                                    </td>
-                                    <td>${records.out.length > 0 ? (records.out[0].late === 1 ? 'Late' : 'On Time') : '-'}</td>
-                                    <td>
-                                        <button onclick="saveRecord(${firstRecord.id}, 'out')" class="btn btn-primary">
-                                            <i class="fas fa-save"></i> Save Change
-                                        </button>
-                                        <button onclick="deleteRecord(${firstRecord.id})" class="btn btn-danger">
-                                            <i class="fas fa-trash-alt"></i> Delete
-                                        </button>
-                                    </td>
-                                </tr>`;
-                        }).join('');
+    const records = dateWiseAttendance[monthDay];
+    const firstRecord = records.in[0] || records.out[0];
+    const userId = firstRecord.user_id;
+    const fullName = data.user.full_name;
+    const datetimeIn = records.in.length > 0 ? moment(records.in[0].datetime).format('YYYY-MM-DDTHH:mm') : '';
+    const datetimeOut = records.out.length > 0 ? moment(records.out[0].datetime).format('YYYY-MM-DDTHH:mm') : '';
+
+    return `
+        <tr>
+            <td>${index + 1}</td>
+            <td><input type="text" value="${userId}" class="form-control"></td>
+            <td>${fullName}</td>
+            <td><input type="datetime-local" value="${datetimeIn}" class="form-control datetimepicker"></td>
+            <td>Check In</td>
+            <td>
+                <select class="form-control">
+                    <option value="0" ${records.in.length > 0 && records.in[0].attendance === 0 ? 'selected' : ''}>-</option>
+                    <option value="1" ${records.in.length > 0 && records.in[0].attendance === 1 ? 'selected' : ''}>Hadir</option>
+                    <option value="2" ${records.in.length > 0 && records.in[0].attendance === 2 ? 'selected' : ''}>Dispen</option>
+                    <option value="3" ${records.in.length > 0 && records.in[0].attendance === 3 ? 'selected' : ''}>Sakit</option>
+                    <option value="4" ${records.in.length > 0 && records.in[0].attendance === 4 ? 'selected' : ''}>Alfa</option>
+                </select>
+            </td>
+            <td>${records.in.length > 0 ? (records.in[0].late === 1 ? 'Late' : 'On Time') : '-'}</td>
+            <td>
+                <button onclick="saveRecord(${firstRecord.id}, 'in')" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Change
+                </button>
+                <button onclick="deleteRecord(${firstRecord.id})" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="text" value="${userId}" class="form-control"></td>
+            <td>${fullName}</td>
+            <td><input type="datetime-local" value="${datetimeOut}" class="form-control datetimepicker"></td>
+            <td>Check Out</td>
+            <td>
+                <select class="form-control">
+                    <option value="0" ${records.out.length > 0 && records.out[0].attendance === 0 ? 'selected' : ''}>-</option>
+                    <option value="1" ${records.out.length > 0 && records.out[0].attendance === 1 ? 'selected' : ''}>Hadir</option>
+                    <option value="2" ${records.out.length > 0 && records.out[0].attendance === 2 ? 'selected' : ''}>Dispen</option>
+                    <option value="3" ${records.out.length > 0 && records.out[0].attendance === 3 ? 'selected' : ''}>Sakit</option>
+                    <option value="4" ${records.out.length > 0 && records.out[0].attendance === 4 ? 'selected' : ''}>Alfa</option>
+                </select>
+            </td>
+            <td>${records.out.length > 0 ? '-' : '-'}</td> <!-- Update this line -->
+            <td>
+                <button onclick="saveRecord(${firstRecord.id}, 'out')" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Change
+                </button>
+                <button onclick="deleteRecord(${firstRecord.id})" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+            </td>
+        </tr>`;
+}).join('');
+
                         
                         // Reinitialize datetime pickers after table update
                         $('.datetimepicker').datetimepicker({
@@ -358,58 +358,62 @@
         }
         
         function saveRecord(id, type) {
-            const row = $(event.target).closest('tr');
-            const userId = row.find('input').eq(0).val();
-            const datetime = row.find('input').eq(1).val();
-            const attendance = row.find('select').val();
-            
-            const data = {
-                id: id,
-                user_id: userId,
-                datetime: datetime,
-                attendance: attendance,
-                type: type
-            };
-            
-            fetch('../save_record.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert('Record saved successfully.');
-                } else {
-                    alert('Failed to save record.');
-                }
-            })
-            .catch(error => console.error('Error saving record:', error));
+    const row = $(event.target).closest('tr');
+    const userId = row.find('input').eq(0).val();
+    const datetime = row.find('input').eq(1).val();
+    const attendance = row.find('select').val();
+    
+    // Menentukan check-in atau check-out berdasarkan type
+    const checkType = type === 'in' ? 'Check In' : 'Check Out';
+    
+    const data = {
+        id: id,
+        user_id: userId,
+        datetime: datetime,
+        attendance: attendance,
+        check_type: checkType
+    };
+    
+    fetch('../save_record.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Record saved successfully.');
+        } else {
+            alert('Failed to save record.');
         }
+    })
+    .catch(error => console.error('Error saving record:', error));
+}
+
         
-        function deleteRecord(id) {
-            if (confirm('Are you sure you want to delete this record?')) {
-                fetch('../delete_record.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ id: id })
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        alert('Record deleted successfully.');
-                        fetchUserStatistics(); // Refresh the statistics after deletion
-                    } else {
-                        alert('Failed to delete record.');
-                    }
-                })
-                .catch(error => console.error('Error deleting record:', error));
+function deleteRecord(id) {
+    if (confirm('Are you sure you want to delete this record?')) {
+        fetch('../delete_record.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: id })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Record deleted successfully.');
+                fetchUserStatistics(); // Refresh the statistics after deletion
+            } else {
+                alert('Failed to delete record.');
             }
-        }
+        })
+        .catch(error => console.error('Error deleting record:', error));
+    }
+}
         
         // Fetch user statistics on page load
         fetchUserStatistics();
